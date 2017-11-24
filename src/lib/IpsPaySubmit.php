@@ -15,6 +15,10 @@ class IpsPaySubmit
         $this->ipsPayConfig = $ipsPayConfig;
     }
 
+    /**
+     * 获取请求xml数据
+     * @return mixed
+     */
     public function getReqXml(){
         return $this->reqXml;
     }
