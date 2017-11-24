@@ -1,5 +1,5 @@
 <?php
-namespace TodChan\lib;
+namespace TodChan\HxIps\lib;
 
 /**
  * IPS支付提交类

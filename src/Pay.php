@@ -1,9 +1,10 @@
 <?php
-namespace TodChan;
-use TodChan\lib\IpsPayNotifyVerify;
-use TodChan\lib\IpsPaySubmit;
-use TodChan\lib\log\CLogFileHandler;
-use TodChan\lib\log\Log;
+namespace TodChan\HxIps;
+
+use TodChan\HxIps\lib\IpsPayNotifyVerify;
+use TodChan\HxIps\lib\IpsPaySubmit;
+use TodChan\HxIps\lib\log\CLogFileHandler;
+use TodChan\HxIps\lib\log\Log;
 
 /**
  * 支付类，集中调用IPS的各种支付方式

@@ -1,5 +1,5 @@
 <?php
-namespace TodChan\lib;
+namespace TodChan\HxIps\lib;
 
 /**
  * 回调验证类

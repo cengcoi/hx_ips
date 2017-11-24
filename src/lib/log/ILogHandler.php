@@ -1,5 +1,5 @@
 <?php 
-namespace TodChan\lib\log;
+namespace TodChan\HxIps\lib\log;
 
 /**
 * 日志列表

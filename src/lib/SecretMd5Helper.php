@@ -1,5 +1,5 @@
 <?php
-namespace TodChan\lib;
+namespace TodChan\HxIps\lib;
 
 /* *
  * MD5加密类（用于签名加密、验证）

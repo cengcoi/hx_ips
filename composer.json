@@ -1,0 +1,19 @@
+{
+  "name": "chan/hx_ips",
+  "description": "huanxun ips payment sdk on composer",
+  "type": "library",
+  "license": "GPL-3.0",
+  "authors": [
+    {
+      "name": "Tod Chan",
+      "email": "cx@cengcoi.com"
+    }
+  ],
+  "minimum-stability": "stable",
+  "require": {},
+  "autoload":{
+    "psr-4":{
+      "TodChan\\HxIps\\":"src/"
+    }
+  }
+}
