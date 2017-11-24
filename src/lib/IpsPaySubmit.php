@@ -63,7 +63,7 @@ class IpsPaySubmit
         $sReqXmlHead .= "<MerCode>".$paraTemp["MerCode"]."</MerCode>";
         $sReqXmlHead .= "<MerName>".$paraTemp["MerName"]."</MerName>";
         $sReqXmlHead .= "<Account>".$paraTemp["Account"]."</Account>";
-        $sReqXmlHead .= "<MsgId>".$this->ipsPayConfig["MsgId"]."</MsgId>";
+        $sReqXmlHead .= "<MsgId>".$paraTemp["MsgId"]."</MsgId>";
         $sReqXmlHead .= "<ReqDate>".$paraTemp["ReqDate"]."</ReqDate>";
         $sReqXmlHead .= "<Signature>".SecretMd5Helper::md5Sign($this->buildBody($paraTemp),$paraTemp["MerCode"],$this->ipsPayConfig['MerCert'])."</Signature>";
         $sReqXmlHead .= "</head>";
