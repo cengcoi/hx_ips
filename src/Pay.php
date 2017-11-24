@@ -56,11 +56,11 @@ Class Pay{
             "BillExp"	=> $params['BillExp'],//超时时间，接口不必填，可以通过业务要求必填，最大2小时，格式:yyyy-MM-dd HH:ii:ss
             "RetEncodeType"	=> 17,//签名方式，暂时固定为MD5方式，值为17
             "MsgId" => uniqid(),
-//            "ReachAddress"	=> '',//收货人地址
-//            "ReachBy"	=> '',//收货人姓名
-//            "Attach"	=> ''//买家留言
+            "ReachAddress"	=> '',//收货人地址
+            "ReachBy"	=> '',//收货人姓名
+            "Attach"	=> ''//买家留言
         );
-        
+
 
         $request = new IpsPaySubmit($this->config);
         $formText = $request->buildRequestForm($parameters);
