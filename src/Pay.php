@@ -32,7 +32,7 @@ Class Pay{
     public function wxWebPay($params=[]){
         if(empty($params))
             return false;
-        $needKeys = ['MerBillNo','OrdAmt','OrdTime','GoodsName','GoodsCount','CurrencyType','BillExp'];
+        $needKeys = ['MerName','MerBillNo','OrdAmt','OrdTime','GoodsName','GoodsCount','CurrencyType','BillExp'];
 
         // 构成支付订单必须的字段
         foreach ($needKeys as $need){
@@ -42,6 +42,7 @@ Class Pay{
 
         $parameters = array(
             "MerCode"	=> $this->config['MerCode'],// 商户号，必填
+            "MerName" => $params['MerName'] ? $params['MerName'] : '',//商户名称
             "Account"	=> $this->config['Account'],//商户账户号，必填
             "MerBillno"	=> $params['MerBillNo'],//商户订单号，必填
             "OrdAmt"   => $params['OrdAmt'],//订单金额，必填
@@ -54,14 +55,12 @@ Class Pay{
             "ServerUrl"	=> $this->config['S2Snotify_url'],//商户S2S返回地址，使用配置里面的回调地址
             "BillExp"	=> $params['BillExp'],//超时时间，接口不必填，可以通过业务要求必填，最大2小时，格式:yyyy-MM-dd HH:ii:ss
             "RetEncodeType"	=> 17,//签名方式，暂时固定为MD5方式，值为17
+            "MsgId" => uniqid(),
 //            "ReachAddress"	=> '',//收货人地址
 //            "ReachBy"	=> '',//收货人姓名
-//            "Attach"	=> //买家留言
+//            "Attach"	=> ''//买家留言
         );
-
-        if(isset($params['MerName']))
-            $parameters['MerName'] = $params['MerName'];//商户名称
-
+        
 
         $request = new IpsPaySubmit($this->config);
         $formText = $request->buildRequestForm($parameters);
