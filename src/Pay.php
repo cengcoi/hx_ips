@@ -64,7 +64,7 @@ Class Pay{
 
         $request = new IpsPaySubmit($this->config);
         $formText = $request->buildRequestForm($parameters);
-        Log::INFO('支付请求 | 生成报文:',$request->getReqXml());
+        Log::INFO('支付请求 | 生成报文:'.$request->getReqXml());
         return $formText;
     }
 
