@@ -1,10 +1,14 @@
 <?php
 namespace TodChan\HxIps;
 
+use TodChan\HxIps\lib\IpsXmlVerify;
 use TodChan\HxIps\lib\IpsPayNotifyVerify;
-use TodChan\HxIps\lib\IpsPaySubmit;
+use TodChan\HxIps\lib\IpsQuerySubmit;
+use TodChan\HxIps\lib\IpsRefundSubmit;
+use TodChan\HxIps\lib\IpsWxWebPaySubmit;
 use TodChan\HxIps\lib\log\CLogFileHandler;
 use TodChan\HxIps\lib\log\Log;
+use TodChan\HxIps\lib\SecretMd5Helper;
 
 /**
  * 支付类，集中调用IPS的各种支付方式
@@ -15,14 +19,18 @@ use TodChan\HxIps\lib\log\Log;
 
 Class Pay{
     protected $config;
+    protected $verify;
 
     public function __construct($config,$logFilePath)
     {
         $this->config = $config;
+        $this->verify = new IpsXmlVerify($this->config);
         Log::Init(new CLogFileHandler($logFilePath),15);
     }
 
     const WXPAY_POST_URL ='https://thumbpay.e-years.com/psfp-webscan/onlinePay.do';//微信网页支付网关
+    const QUERY_URL = 'https://newpay.ips.com.cn/psfp-entry/services/order?wsdl';// 查询订单网关
+    const REFUND_URL = 'https://newpay.ips.com.cn/psfp-entry/services/refund?wsdl';// 订单退款网关
 
     /**
      * 微信网页支付
@@ -62,34 +70,19 @@ Class Pay{
         );
 
 
-        $request = new IpsPaySubmit($this->config);
+        $request = new IpsWxWebPaySubmit($this->config);
         $formText = $request->buildRequestForm($parameters);
         Log::INFO('支付请求 | 生成报文:'.$request->getReqXml());
         return $formText;
     }
 
     /**
-     * 查询订单
-     */
-    public function queryOrder(){
-
-    }
-
-    /**
-     * 退款操作
-     */
-    public function refund(){
-
-    }
-
-    /**
-     * 回调验证订单
+     * 支付后回调验证订单
      * @param string $xml   回调报文
      * @return array result表示处理状态，order_result表示订单状态（不一定有），msg表示处理信息（不一定有）
      */
     public function orderValidate($xml){
-        $verify = new IpsPayNotifyVerify($this->config);
-        if (($msg = $verify->verifyReturn($xml)) === true) { // 验证成功，必须要是true
+        if (($msg = $this->verify->verifyReturn($xml)) === true) { // 验证成功，必须要是true
             Log::INFO('支付完成进行回调 | 报文：'.$xml);
 
             $xmlResult = new SimpleXMLElement($xml);
@@ -106,5 +99,94 @@ Class Pay{
             Log::WARN('回调验证失败 | 原因：'.$msg.' | 报文：'.$xml);
             return ['result'=>false];
         }
+    }
+
+    /**
+     * 查询订单
+     * @param array $params 提交参数
+     * @return bool
+     */
+    public function queryOrder(array $params){
+        if(empty($params))
+            return false;
+        $needKeys = ['MerBillNo','Date','Amount'];
+
+        // 构成查询报文必须的字段
+        foreach ($needKeys as $need){
+            if(!isset($params[$need]))
+                return false;
+        }
+
+        $parameters = [
+            'MerBillNo'=>$params['MerBillNo'],
+            'Date'=>$params['Date'],
+            'Amount'=>$params['Amount']
+        ];
+
+        $request = new IpsQuerySubmit($this->config);
+        $xml = $request->buildRequestPara($parameters);
+        Log::INFO('订单查询 | 生成报文:'.$request->getReqXml());
+        $result = CurlHelper::curlPost(self::QUERY_URL,$xml);
+
+        if (($msg = $this->verify->verifyReturn($result)) === true) { // 验证成功，必须要是true
+            $body = SecretMd5Helper::subStrXml("<body>","</body>",$result);
+            return simplexml_load_string($body);
+        } else {
+            Log::WARN('查询返回验证失败 | 原因：'.$msg.' | 报文：'.$xml);
+            return false;
+        }
+    }
+
+    /**
+     * 退款操作
+     * @param array $params 提交参数
+     * @return bool
+     */
+    public function refund(array $params){
+        if(empty($params))
+            return false;
+        $needKeys = ['MerBillNo','OrgMerBillNo','OrgMerTime','BillAmount','RefundAmount'];
+
+        // 构成退款报文必须的字段
+        foreach ($needKeys as $need){
+            if(!isset($params[$need]))
+                return false;
+        }
+
+        $parameters = [
+            'MerBillNo'=>$params['MerBillNo'],// 退款订单号
+            'OrgMerBillNo'=>$params['OrgMerBillNo'],// 原订单号
+            'OrgMerTime'=>$params['OrgMerTime'],// 原订单提交时间，格式：yyyyMMdd
+            'BillAmount'=>$params['BillAmount'],// 订单金额
+            'RefundAmount'=>$params['RefundAmount'],// 退款金额
+            'RefundMemo'=>$params['RefundMemo'] ? $params['RefundMemo'] : '',// 备注信息
+        ];
+
+        $request = new IpsRefundSubmit($this->config);
+        $xml = $request->buildRequestPara($parameters);
+        Log::INFO('订单退款 | 生成报文:'.$request->getReqXml());
+        $result = CurlHelper::curlPost(self::REFUND_URL,$xml);
+
+        if (($msg = $this->verify->verifyReturn($result)) === true) { // 验证成功，必须要是true
+            $xmlResult = new SimpleXMLElement($result);
+            $status = $xmlResult->WxPayRsp->body->Status;
+            if($status == "Y") {
+                return ['result'=>true,'return_msg'=>simplexml_load_string($result)];
+            }elseif($status == "N") {
+                Log::WARN('处理交易失败 | 返回报文：'.$result);
+                return ['result'=>false,'return_msg'=>simplexml_load_string($result)];
+            }elseif($status == "P") {
+                Log::INFO('退款正在处理中 | 返回报文:'.$result);
+                return ['result'=>true,'return_msg'=>simplexml_load_string($result)];
+            }
+        } else {
+            Log::WARN('退款请求失败 | 原因：'.$msg.' | 请求报文：'.$xml);
+            return false;
+        }
+
+
+
+
+
     }
 }

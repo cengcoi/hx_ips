@@ -2,11 +2,11 @@
 namespace TodChan\HxIps\lib;
 
 /**
- * 回调验证类
- * Class IpsPayNotifyVerify
+ * IPS xml验证类
+ * Class IpsNotifyVerify
  * @package TodChan\lib
  */
-class IpsPayNotifyVerify
+class IpsXmlVerify
 {
     private $ipsPayConfig;
 
