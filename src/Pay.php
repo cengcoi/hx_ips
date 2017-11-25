@@ -29,8 +29,8 @@ Class Pay{
     }
 
     const WXPAY_POST_URL ='https://thumbpay.e-years.com/psfp-webscan/onlinePay.do';//微信网页支付网关
-    const QUERY_URL = 'https://newpay.ips.com.cn/psfp-entry/services/order?wsdl';// 查询订单网关
-    const REFUND_URL = 'https://newpay.ips.com.cn/psfp-entry/services/refund?wsdl';// 订单退款网关
+    const QUERY_WSDL = 'https://newpay.ips.com.cn/psfp-entry/services/order?wsdl';// 查询订单webservice网关
+    const REFUND_WSDL = 'https://newpay.ips.com.cn/psfp-entry/services/refund?wsdl';// 订单退款webservice网关
 
     /**
      * 微信网页支付
@@ -102,7 +102,7 @@ Class Pay{
     }
 
     /**
-     * 查询订单
+     * 查询订单 SOAP方式
      * @param array $params 提交参数
      * @return bool
      */
@@ -126,7 +126,10 @@ Class Pay{
         $request = new IpsQuerySubmit($this->config);
         $xml = $request->buildRequestPara($parameters);
         Log::INFO('订单查询 | 生成报文:'.$request->getReqXml());
-        $result = CurlHelper::curlPost(self::QUERY_URL,$xml);
+
+        $client = new \SoapClient(self::QUERY_WSDL);
+
+        $result = $client->getOrderByMerBillNo($xml);
 
         if (($msg = $this->verify->verifyReturn($result)) === true) { // 验证成功，必须要是true
             $body = SecretMd5Helper::subStrXml("<body>","</body>",$result);
@@ -138,7 +141,7 @@ Class Pay{
     }
 
     /**
-     * 退款操作
+     * 退款操作 SOAP方式
      * @param array $params 提交参数
      * @return bool
      */
@@ -165,7 +168,9 @@ Class Pay{
         $request = new IpsRefundSubmit($this->config);
         $xml = $request->buildRequestPara($parameters);
         Log::INFO('订单退款 | 生成报文:'.$request->getReqXml());
-        $result = CurlHelper::curlPost(self::REFUND_URL,$xml);
+
+        $client = new \SoapClient(self::REFUND_WSDL);
+        $result = $client->refund($xml);
 
         if (($msg = $this->verify->verifyReturn($result)) === true) { // 验证成功，必须要是true
             $xmlResult = new SimpleXMLElement($result);
@@ -183,10 +188,6 @@ Class Pay{
             Log::WARN('退款请求失败 | 原因：'.$msg.' | 请求报文：'.$xml);
             return false;
         }
-
-
-
-
 
     }
 }

@@ -17,7 +17,7 @@ class CLogFileHandler implements ILogHandler
 	
 	public function write($msg)
 	{
-		fwrite($this->handle, $msg, 4096);
+		fwrite($this->handle, $msg);
 	}
 	
 	public function __destruct()
