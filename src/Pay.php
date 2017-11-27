@@ -86,14 +86,23 @@ Class Pay{
             Log::INFO('支付完成进行回调 | 报文：'.$xml);
 
             $xmlResult = new SimpleXMLElement($xml);
-            $status = $xmlResult->WxPayRsp->body->Status;
+            $status = $xmlResult->WxPayRsp->body->Status;//交易结果
+            $merBillNo = $xmlResult->WxPayRsp->body->MerBillno;//订单号
+
             if($status == "Y") {
-                return ['result'=>true,'order_result'=>true];
+                return ['result'=>true,'order_result'=>'Y','data'=>[
+                    'merBillNo'=>$merBillNo,//订单号
+                    'ipsBillNo'=>$xmlResult->WxPayRsp->body->IpsBillno,//IPS订单号
+                    'ipsBillTime'=>$xmlResult->WxPayRsp->body->IpsBillTime,//IPS支付时间
+                    'orderAmount'=>$xmlResult->WxPayRsp->body->OrdAmt,//IPS支付金额
+                ]];
             }elseif($status == "N") {
                 Log::WARN('订单交易失败 | 报文：'.$xml);
-                return ['result'=>true,'order_result'=>true,'msg'=>'交易失败'];
+                return ['result'=>true,'order_result'=>'N','msg'=>'交易失败', 'data'=>[
+                    'merBillNo'=>$merBillNo,//订单号
+                ]];
             }else {
-                return ['result'=>true,'order_result'=>false,'msg'=>'交易处理中'];
+                return ['result'=>true,'order_result'=>'P','msg'=>'交易处理中'];
             }
         } else {
             Log::WARN('回调验证失败 | 原因：'.$msg.' | 报文：'.$xml);
